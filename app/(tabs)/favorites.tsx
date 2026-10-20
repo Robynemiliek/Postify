@@ -1,9 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { getBookmarkedPosts, toggleBookmark } from "@/api/postApi";
+import Post from "@/components/Post";
 import { PostData } from "@/utils/postData";
 
 export default function Favorites() {
@@ -57,21 +58,13 @@ export default function Favorites() {
       <Text style={styles.title}>My favorites</Text>
 
       <FlatList
-        contentContainerStyle={posts.length === 0 ? styles.emptyList : undefined}
+        contentContainerStyle={
+          posts.length === 0 ? styles.emptyList : undefined
+        }
         data={posts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.postCard}>
-            <Text style={styles.postTitle}>{item.title}</Text>
-            <Text style={styles.postDescription}>{item.description}</Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => removeFavorite(item)}
-              style={styles.removeButton}
-            >
-              <Text style={styles.removeButtonText}>Remove favorite</Text>
-            </Pressable>
-          </View>
+          <Post post={item} onRemoveFavorite={removeFavorite} />
         )}
         ListEmptyComponent={
           <Text style={styles.emptyMessage}>
@@ -97,34 +90,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 16,
   },
-  // Kortene deler farger, avrunding og avstand med innleggene i feeden.
-  postCard: {
-    backgroundColor: "white",
-    padding: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-  },
-  postTitle: {
-    textAlign: "center",
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 6,
-  },
-  postDescription: {
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  // Handlingsknappen bruker samme lyse blåfarge som andre knapper i appen.
-  removeButton: {
-    backgroundColor: "#ddddff",
-    padding: 12,
-    borderRadius: 8,
-  },
-  removeButtonText: {
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  // Sentrerer tom-tilstanden midt på siden når ingen favoritter finnes.
   emptyList: {
     flexGrow: 1,
     justifyContent: "center",

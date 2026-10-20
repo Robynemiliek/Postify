@@ -6,4 +6,7 @@ export interface PostData {
   author: string;
   category: string;
   bookmarks?: string[];
+  comments?: string[];
+  likes?: string[];
+  imageUrls?: string[];
 }

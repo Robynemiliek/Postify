@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
@@ -16,6 +16,7 @@ import {
   getAllPosts,
   updatePost as updatePostFromFirebase,
 } from "@/api/postApi";
+import Post from "@/components/Post";
 import { PostData } from "@/utils/postData";
 
 export default function Page() {
@@ -28,7 +29,6 @@ export default function Page() {
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedCategory, setEditedCategory] = useState("");
-
 
   // MIDLERTIDIG INNLOGGING
   const saveCurrentUser = async () => {
@@ -110,38 +110,14 @@ export default function Page() {
         data={posts}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => (
-          <Pressable
-            style={styles.postCard}
-            onPress={() => router.push(`/postDetails/${item.id}`)}
-          >
-            <Text style={styles.postTitle}>{item.title}</Text>
-            <Text style={styles.postDescription}>{item.description}</Text>
-            {item.category && (
-              <Text style={styles.postDescription}>
-                Category: {item.category}
-              </Text>
-            )}
-
-            {/* Slette post */}
-            <View>
-              <Pressable
-                style={styles.deleteButton}
-                onPress={() => {
-                  setSelectedPost(item);
-                  setModalVisible(true);
-                }}
-              >
-                <Text style={styles.buttonText}>Delete</Text>
-              </Pressable>
-            </View>
-            {/* Redigere post */}
-            <Pressable
-              style={styles.editButton}
-              onPress={() => startEditPost(item)}
-            >
-              <Text style={styles.buttonText}>Edit</Text>
-            </Pressable>
-          </Pressable>
+          <Post
+            post={item}
+            onDelete={(post) => {
+              setSelectedPost(post);
+              setModalVisible(true);
+            }}
+            onEdit={startEditPost}
+          />
         )}
       />
       {/* Modal for å slette post */}
@@ -231,22 +207,6 @@ const styles = StyleSheet.create({
     fontSize: 64,
     fontWeight: "bold",
   },
-  postCard: {
-    backgroundColor: "white",
-    padding: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-  },
-  postTitle: {
-    textAlign: "center",
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 6,
-  },
-  postDescription: {
-    fontSize: 16,
-    marginBottom: 12,
-  },
   commentAuthor: {
     fontWeight: "bold",
   },
@@ -262,20 +222,12 @@ const styles = StyleSheet.create({
     margin: 40,
     borderRadius: 16,
   },
-  deleteButton: {
-    backgroundColor: "#ffdddd",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-
   commentButton: {
     backgroundColor: "#ddddff",
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
   },
-
   buttonText: {
     textAlign: "center",
     fontWeight: "bold",
@@ -284,24 +236,20 @@ const styles = StyleSheet.create({
     marginTop: 20,
     gap: 10,
   },
-
   cancelButton: {
     backgroundColor: "#eeeeee",
     padding: 12,
     borderRadius: 8,
   },
-
   cancelButtonText: {
     textAlign: "center",
     fontWeight: "bold",
   },
-
   confirmDeleteButton: {
     backgroundColor: "#ffdddd",
     padding: 12,
     borderRadius: 8,
   },
-
   confirmDeleteText: {
     textAlign: "center",
     fontWeight: "bold",
@@ -316,12 +264,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     minHeight: 50,
     textAlignVertical: "top",
-  },
-  editButton: {
-    backgroundColor: "#ddddff",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
   },
   editInput: {
     borderWidth: 1,
