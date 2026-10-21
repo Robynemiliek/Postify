@@ -29,7 +29,7 @@ export default function Profile() {
           pressed && styles.buttonPressed,
         ]}
       >
-        <Text style={styles.createPostButtonText}>＋  Create post</Text>
+        <Text style={styles.createPostButtonText}>＋ Create post</Text>
       </Pressable>
     </View>
   );

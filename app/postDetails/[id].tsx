@@ -1,15 +1,26 @@
+import {
+  addComment,
+  deleteComment,
+  getComments,
+  updateComment,
+} from "@/api/commentApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
+import { CommentObject } from "@/utils/commentData";
+
 import { getPostById, toggleBookmark } from "@/api/postApi";
+import CommentModal from "@/components/CommentModal";
+import CommentsSection from "@/components/CommentsSection";
 import { PostData } from "@/utils/postData";
 
 export default function PostDetails() {
@@ -18,12 +29,29 @@ export default function PostDetails() {
   const [post, setPost] = useState<PostData | null>(null);
   const [currentUser, setCurrentUser] = useState("");
 
+  const [comments, setComments] = useState<CommentObject[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [selectedComment, setSelectedComment] = useState<CommentObject | null>(
+    null,
+  );
+
   useEffect(() => {
     const loadPost = async () => {
       if (!id) return;
 
       const fetchedPost = await getPostById(id);
       setPost(fetchedPost);
+
+      setCommentsLoading(true);
+
+      try {
+        const fetchedComments = await getComments(fetchedPost?.comments ?? []);
+        setComments(fetchedComments);
+      } finally {
+        setCommentsLoading(false);
+      }
 
       const user = await AsyncStorage.getItem("currentUser");
       setCurrentUser(user || "");
@@ -55,8 +83,88 @@ export default function PostDetails() {
     setPost({ ...post, bookmarks: newBookmarks });
   };
 
+  const handleAddComment = () => {
+    setSelectedComment(null);
+    setCommentModalVisible(true);
+  };
+
+  const handleEditComment = (comment: CommentObject) => {
+    setSelectedComment(comment);
+    setCommentModalVisible(true);
+  };
+
+  const handleSaveComment = async (text: string) => {
+    if (!post || !currentUser) return;
+
+    if (selectedComment) {
+      // Rediger eksisterende kommentar
+      if (selectedComment.comment.authorId !== currentUser) return;
+
+      await updateComment(selectedComment.id, text);
+
+      setComments((prev) =>
+        prev.map((item) =>
+          item.id === selectedComment.id
+            ? {
+                ...item,
+                comment: { ...item.comment, comment: text },
+              }
+            : item,
+        ),
+      );
+    } else {
+      // Opprett ny kommentar
+      const commentData = {
+        authorId: currentUser,
+        comment: text,
+      };
+
+      const newId = await addComment(post.id, commentData);
+
+      setComments((prev) => [...prev, { id: newId, comment: commentData }]);
+
+      setPost((prev) =>
+        prev
+          ? {
+              ...prev,
+              comments: [...(prev.comments ?? []), newId],
+            }
+          : prev,
+      );
+    }
+
+    setCommentModalVisible(false);
+    setSelectedComment(null);
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!post) return;
+
+    const commentToDelete = comments.find((item) => item.id === commentId);
+
+    if (!commentToDelete || commentToDelete.comment.authorId !== currentUser) {
+      return;
+    }
+
+    await deleteComment(commentId, post.id);
+
+    setComments((prev) => prev.filter((item) => item.id !== commentId));
+
+    setPost((prev) =>
+      prev
+        ? {
+            ...prev,
+            comments: (prev.comments ?? []).filter((id) => id !== commentId),
+          }
+        : prev,
+    );
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+    >
       <Pressable
         accessibilityLabel="Go back"
         accessibilityRole="button"
@@ -66,7 +174,7 @@ export default function PostDetails() {
           pressed && styles.buttonPressed,
         ]}
       >
-        <Text style={styles.backButtonText}>‹  Back</Text>
+        <Text style={styles.backButtonText}>‹ Back</Text>
       </Pressable>
       <View style={styles.postCard}>
         <Text style={styles.title}>{post.title}</Text>
@@ -91,20 +199,45 @@ export default function PostDetails() {
           ]}
         >
           <Text style={styles.bookmarkButtonText}>
-            {currentlyBookmarked
-              ? "🔖 Remove bookmark"
-              : "🔖 Add to bookmarks"}
+            {currentlyBookmarked ? "🔖 Remove bookmark" : "🔖 Add to bookmarks"}
           </Text>
         </Pressable>
       </View>
-    </View>
+
+      <View style={styles.commentsContainer}>
+        <CommentsSection
+          comments={comments}
+          currentUser={currentUser}
+          loading={commentsLoading}
+          onEdit={handleEditComment}
+          onDelete={handleDeleteComment}
+        />
+
+        <Pressable
+          style={styles.addCommentButton}
+          onPress={handleAddComment}
+          disabled={!currentUser}
+        >
+          <Text style={styles.addCommentButtonText}>+ Add comment</Text>
+        </Pressable>
+      </View>
+
+      <CommentModal
+        visible={commentModalVisible}
+        initialText={selectedComment?.comment.comment}
+        onSave={handleSaveComment}
+        onClose={() => {
+          setCommentModalVisible(false);
+          setSelectedComment(null);
+        }}
+      />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
     paddingHorizontal: 20,
   },
   backButton: {
@@ -172,5 +305,24 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: "gray",
+  },
+  scrollContent: {
+    paddingVertical: 20,
+    paddingBottom: 40,
+  },
+
+  commentsContainer: {
+    marginTop: 20,
+  },
+  addCommentButton: {
+    backgroundColor: "#ddddff",
+    padding: 14,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  addCommentButtonText: {
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
