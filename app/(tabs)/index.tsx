@@ -7,7 +7,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
@@ -17,6 +16,7 @@ import {
   updatePost as updatePostFromFirebase,
 } from "@/api/postApi";
 import Post from "@/components/Post";
+import PostForm from "@/components/PostForm";
 import { PostData } from "@/utils/postData";
 
 export default function Page() {
@@ -76,6 +76,15 @@ export default function Page() {
     setEditedCategory(post.category || "");
     setEditModalVisible(true);
   };
+
+  const handleEditFormChange = useCallback(
+    (title: string, description: string, category: string) => {
+      setEditedTitle(title);
+      setEditedDescription(description);
+      setEditedCategory(category);
+    },
+    [],
+  );
 
   const updatePost = async () => {
     if (!selectedPost) return;
@@ -145,29 +154,17 @@ export default function Page() {
           </View>
         </View>
       </Modal>
+
       {/* Modal for å redigere post */}
       <Modal visible={editModalVisible} transparent={true} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
             <Text>Edit Post</Text>
 
-            <TextInput
-              style={styles.editInput}
-              value={editedTitle}
-              onChangeText={setEditedTitle}
-              placeholder="Title"
-            />
-            <TextInput
-              style={styles.editInput}
-              value={editedDescription}
-              onChangeText={setEditedDescription}
-              placeholder="Description"
-            />
-            <TextInput
-              style={styles.editInput}
-              value={editedCategory}
-              onChangeText={setEditedCategory}
-              placeholder="Category"
+            <PostForm
+              key={selectedPost?.id ?? "new"}
+              initialData={selectedPost ?? undefined}
+              onChange={handleEditFormChange}
             />
 
             <View style={styles.modalButtons}>
@@ -264,12 +261,5 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     minHeight: 50,
     textAlignVertical: "top",
-  },
-  editInput: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
   },
 });

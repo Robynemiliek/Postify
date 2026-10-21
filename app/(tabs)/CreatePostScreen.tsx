@@ -1,20 +1,24 @@
-import { useState } from "react";
 import { router } from "expo-router";
-import {
-  Button,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useCallback, useState } from "react";
+import { Button, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { createPost } from "@/api/postApi";
+import PostForm from "@/components/PostForm";
 
 export default function CreatePostScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [formKey, setFormKey] = useState(0);
+
+  const handleFormChange = useCallback(
+    (newTitle: string, newDescription: string, newCategory: string) => {
+      setTitle(newTitle);
+      setDescription(newDescription);
+      setCategory(newCategory);
+    },
+    [],
+  );
 
   const savePost = async () => {
     await createPost({
@@ -28,6 +32,9 @@ export default function CreatePostScreen() {
     setTitle("");
     setDescription("");
     setCategory("");
+
+    // Tømmer også tekstfeltene i PostForm
+    setFormKey((prev) => prev + 1);
   };
 
   return (
@@ -41,34 +48,12 @@ export default function CreatePostScreen() {
           pressed && styles.buttonPressed,
         ]}
       >
-        <Text style={styles.backButtonText}>‹  Back</Text>
+        <Text style={styles.backButtonText}>‹ Back</Text>
       </Pressable>
 
       <Text style={styles.title}>Create post</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Title"
-        placeholderTextColor="#888"
-        value={title}
-        onChangeText={setTitle}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Description"
-        placeholderTextColor="#888"
-        value={description}
-        onChangeText={setDescription}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Category"
-        placeholderTextColor="#888"
-        value={category}
-        onChangeText={setCategory}
-      />
+      <PostForm key={formKey} onChange={handleFormChange} />
 
       <Button title="Save post" onPress={savePost} />
     </View>
@@ -95,14 +80,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    marginTop: 12,
-    marginBottom: 8,
-    color: "black",
-  },
+
   buttonPressed: {
     opacity: 0.75,
   },
