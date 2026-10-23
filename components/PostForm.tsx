@@ -1,10 +1,16 @@
+import ImageSelector from "@/components/ImageSelector";
 import { PostData } from "@/utils/postData";
 import { useEffect, useState } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 
 type PostFormProps = {
   initialData?: PostData;
-  onChange: (title: string, description: string, category: string) => void;
+  onChange: (
+    title: string,
+    description: string,
+    category: string,
+    images: string[],
+  ) => void;
 };
 
 export default function PostForm({ initialData, onChange }: PostFormProps) {
@@ -14,9 +20,11 @@ export default function PostForm({ initialData, onChange }: PostFormProps) {
   );
   const [category, setCategory] = useState(initialData?.category ?? "");
 
+  const [images, setImages] = useState<string[]>([]);
+
   useEffect(() => {
-    onChange(title, description, category);
-  }, [title, description, category, onChange]);
+    onChange(title, description, category, images);
+  }, [title, description, category, images, onChange]);
 
   return (
     <View>
@@ -43,6 +51,8 @@ export default function PostForm({ initialData, onChange }: PostFormProps) {
         value={category}
         onChangeText={setCategory}
       />
+
+      <ImageSelector images={images} onChange={setImages} />
     </View>
   );
 }
