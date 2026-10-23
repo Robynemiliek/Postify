@@ -1,10 +1,12 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { initializeApp } from "firebase/app";
+import { getAuth, initializeAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { Platform } from "react-native";
 
-// Firebase reads these values from the .env file.
-// The EXPO_PUBLIC_ prefix makes them available in client-side code.
-// Never paste real keys here — always use environment variables.
-
+// The values come from .env (see .env.example).
+// Only variables starting with EXPO_PUBLIC_ are available in app code.
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -14,7 +16,25 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Connect to our Firebase project once, then share the services with the whole app.
 const app = initializeApp(firebaseConfig);
 
-// db is the Firestore database instance we import in every API function.
-export const db = getFirestore(app);
+export const db = getFirestore(app); // Firestore database (posts, comments)
+export const storage = getStorage(app); // Firebase Storage (images)
+
+// Web uses getAuth (keeps the user signed in with the browser's localStorage).
+// Native uses initializeAuth with AsyncStorage so the user stays signed in after restarting the app.
+// require() is used so the React Native-only code is never loaded in the web bundle.
+function createAuth() {
+  if (Platform.OS === "web") {
+    return getAuth(app);
+  }
+  const {
+    getReactNativePersistence,
+  } = require("@firebase/auth/dist/rn/index.js");
+  return initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+}
+
+export const auth = createAuth(); // Firebase Authentication

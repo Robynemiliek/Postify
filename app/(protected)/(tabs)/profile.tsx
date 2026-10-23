@@ -1,7 +1,35 @@
 import { router } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
+import { signOutUser } from "@/api/authApi";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Profile() {
+  const { user } = useAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSignOut = async () => {
+    setLoggingOut(true);
+    setError("");
+
+    try {
+      await signOutUser();
+    } catch {
+      setError("Could not sign out. Please try again.");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Image
@@ -11,13 +39,15 @@ export default function Profile() {
         style={styles.image}
       />
 
-      <Text style={styles.name}>Robyn</Text>
+      <Text style={styles.name}>{user?.displayName || "Postify user"}</Text>
+
       <Text style={styles.bio}>Student og utvikler</Text>
+      <Text style={styles.email}>{user?.email}</Text>
 
       <View style={styles.imfo}>
         <Text style={styles.imfoText}>Oslo, Norway</Text>
         <Text style={styles.imfoText}>Høyskolen Kristiania</Text>
-        <Text style={styles.imfoText}>12 inlegg</Text>
+        <Text style={styles.imfoText}>12 innlegg</Text>
       </View>
 
       <Pressable
@@ -31,6 +61,25 @@ export default function Profile() {
       >
         <Text style={styles.createPostButtonText}>＋ Create post</Text>
       </Pressable>
+
+      <Pressable
+        accessibilityLabel="Log out"
+        accessibilityRole="button"
+        disabled={loggingOut}
+        onPress={handleSignOut}
+        style={({ pressed }) => [
+          styles.logoutButton,
+          (pressed || loggingOut) && styles.buttonPressed,
+        ]}
+      >
+        {loggingOut ? (
+          <ActivityIndicator color="#6258d8" />
+        ) : (
+          <Text style={styles.logoutButtonText}>Log out</Text>
+        )}
+      </Pressable>
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 }
@@ -62,6 +111,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  email: {
+    fontSize: 14,
+    color: "#6258d8",
+    marginTop: 8,
+  },
+
   imfo: {
     marginTop: 30,
     backgroundColor: "white",
@@ -87,6 +142,28 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     fontWeight: "bold",
+  },
+
+  logoutButton: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#6258d8",
+    padding: 14,
+    borderRadius: 8,
+    marginTop: 12,
+    alignItems: "center",
+  },
+
+  logoutButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#6258d8",
+  },
+
+  error: {
+    color: "#d93025",
+    marginTop: 12,
   },
 
   buttonPressed: {
