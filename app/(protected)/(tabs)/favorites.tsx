@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@/context/AuthContext";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
@@ -10,7 +10,9 @@ import { PostData } from "@/utils/postData";
 export default function Favorites() {
   // Holder brukerens lagrede innlegg og navnet som brukes til bokmerker.
   const [posts, setPosts] = useState<PostData[]>([]);
-  const [currentUser, setCurrentUser] = useState("");
+
+  const { user } = useAuth();
+  const currentUser = user?.uid ?? "";
 
   // Henter favorittene på nytt hver gang fanen får fokus.
   useFocusEffect(
@@ -18,28 +20,25 @@ export default function Favorites() {
       let isActive = true;
 
       const loadFavorites = async () => {
-        const user = await AsyncStorage.getItem("currentUser");
-
-        if (!user) {
+        if (!currentUser) {
           if (isActive) {
-            setCurrentUser("");
             setPosts([]);
           }
           return;
         }
 
-        const bookmarkedPosts = await getBookmarkedPosts(user);
+        const bookmarkedPosts = await getBookmarkedPosts(currentUser);
         if (isActive) {
-          setCurrentUser(user);
           setPosts(bookmarkedPosts);
         }
       };
 
       loadFavorites();
+
       return () => {
         isActive = false;
       };
-    }, []),
+    }, [currentUser]),
   );
 
   // Fjerner bokmerket i databasen og tar innlegget ut av listen med en gang.
@@ -47,6 +46,7 @@ export default function Favorites() {
     if (!currentUser) return;
 
     await toggleBookmark(post.id, currentUser, true);
+
     setPosts((favorites) =>
       favorites.filter((favorite) => favorite.id !== post.id),
     );
