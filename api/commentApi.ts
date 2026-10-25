@@ -27,6 +27,8 @@ function requireAuth() {
 export async function getComments(
   commentIds: string[],
 ): Promise<CommentObject[]> {
+  requireAuth();
+
   const comments: CommentObject[] = [];
 
   for (const id of commentIds) {

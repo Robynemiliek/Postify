@@ -28,6 +28,7 @@ export default function Favorites() {
         }
 
         const bookmarkedPosts = await getBookmarkedPosts(currentUser);
+
         if (isActive) {
           setPosts(bookmarkedPosts);
         }
