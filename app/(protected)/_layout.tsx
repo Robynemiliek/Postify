@@ -21,6 +21,10 @@ export default function ProtectedLayout() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
+        name="CreatePostScreen"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="postDetails/[id]"
         options={{
           title: "Post",

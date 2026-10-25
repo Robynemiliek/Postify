@@ -23,14 +23,6 @@ export default function Layout() {
           title: "Profile",
         }}
       />
-
-      <Tabs.Screen
-        name="CreatePostScreen"
-        options={{
-          href: null,
-        }}
-      />
-
     </Tabs>
   );
 }

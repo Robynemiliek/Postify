@@ -6,8 +6,8 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="postDetails/[id]" />
+        <Stack.Screen name="auth" />
+        <Stack.Screen name="(protected)" />
       </Stack>
     </AuthProvider>
   );
