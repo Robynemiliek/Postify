@@ -4,7 +4,7 @@ import {
   getComments,
   updateComment,
 } from "@/api/commentApi";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@/context/AuthContext";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -26,8 +26,12 @@ import { PostData } from "@/utils/postData";
 export default function PostDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
+  const { user } = useAuth();
+
   const [post, setPost] = useState<PostData | null>(null);
-  const [currentUser, setCurrentUser] = useState("");
+
+  const currentUser = user?.uid ?? "";
+  const currentUserName = user?.displayName ?? user?.email ?? "Unknown";
 
   const [comments, setComments] = useState<CommentObject[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
@@ -52,9 +56,6 @@ export default function PostDetails() {
       } finally {
         setCommentsLoading(false);
       }
-
-      const user = await AsyncStorage.getItem("currentUser");
-      setCurrentUser(user || "");
     };
 
     loadPost();
@@ -115,6 +116,7 @@ export default function PostDetails() {
     } else {
       // Opprett ny kommentar
       const commentData = {
+        author: currentUserName,
         authorId: currentUser,
         comment: text,
       };

@@ -1,4 +1,5 @@
 export interface CommentData {
+  author?: string;
   authorId: string;
   comment: string;
 }

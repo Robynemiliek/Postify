@@ -1,10 +1,10 @@
 import { CommentObject } from "@/utils/commentData";
 import {
-    ActivityIndicator,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 type commentsSectionProps = {
@@ -36,7 +36,9 @@ export default function CommentSection({
 
       {comments.map((item) => (
         <View key={item.id} style={styles.commentCard}>
-          <Text style={styles.author}>{item.comment.authorId}</Text>
+          <Text style={styles.author}>
+            {item.comment.author ?? "Unknown user"}
+          </Text>
           <Text style={styles.commentText}>{item.comment.comment}</Text>
 
           {item.comment.authorId === currentUser && (
