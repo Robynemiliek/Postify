@@ -5,6 +5,7 @@ import {
   FlatList,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -158,14 +159,19 @@ export default function Page() {
       {/* Modal for å redigere post */}
       <Modal visible={editModalVisible} transparent={true} animationType="fade">
         <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, styles.editModalContainer]}>
             <Text>Edit Post</Text>
 
-            <PostForm
-              key={selectedPost?.id ?? "new"}
-              initialData={selectedPost ?? undefined}
-              onChange={handleEditFormChange}
-            />
+            <ScrollView
+              style={styles.editScrollView}
+              keyboardShouldPersistTaps="handled"
+            >
+              <PostForm
+                key={selectedPost?.id ?? "new"}
+                initialData={selectedPost ?? undefined}
+                onChange={handleEditFormChange}
+              />
+            </ScrollView>
 
             <View style={styles.modalButtons}>
               <Pressable
@@ -261,5 +267,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     minHeight: 50,
     textAlignVertical: "top",
+  },
+  editModalContainer: {
+    width: "90%",
+    maxHeight: "85%",
+    margin: 0,
+  },
+  editScrollView: {
+    flexShrink: 1,
   },
 });
