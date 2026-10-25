@@ -25,6 +25,7 @@ export type NewPost = {
   description: string;
   hashtags: string;
   author: string;
+  authorId: string;
   category?: string;
 };
 

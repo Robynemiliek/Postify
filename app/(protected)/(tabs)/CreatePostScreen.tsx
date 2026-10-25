@@ -11,8 +11,11 @@ import {
 
 import { createPost } from "@/api/postApi";
 import PostForm from "@/components/PostForm";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CreatePostScreen() {
+  const { user } = useAuth();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -35,11 +38,14 @@ export default function CreatePostScreen() {
   );
 
   const savePost = async () => {
+    if (!user) return;
+
     await createPost({
       title: title,
       description: description,
       hashtags: "",
-      author: "Robyn",
+      author: user.displayName ?? user.email ?? "Unknown",
+      authorId: user.uid,
       category: category,
     });
 
