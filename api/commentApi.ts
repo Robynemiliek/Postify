@@ -1,16 +1,27 @@
 import {
-    addDoc,
-    arrayRemove,
-    arrayUnion,
-    collection,
-    deleteDoc,
-    doc,
-    getDoc,
-    updateDoc,
+  addDoc,
+  arrayRemove,
+  arrayUnion,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "@/firebaseConfig";
 import { CommentData, CommentObject } from "@/utils/commentData";
+import { getAuth } from "firebase/auth";
+
+function requireAuth() {
+  const user = getAuth().currentUser;
+
+  if (!user) {
+    throw new Error("You must be logged in to perform this action.");
+  }
+
+  return user;
+}
 
 // Henter kommentarer for et spesifikt innlegg
 export async function getComments(
@@ -34,12 +45,17 @@ export async function getComments(
 
 // legger til kommentarer
 export async function addComment(
-  posId: string,
+  postId: string,
   comment: CommentData,
 ): Promise<string> {
-  const commentRef = await addDoc(collection(db, "comments"), comment);
+  const user = requireAuth();
 
-  await updateDoc(doc(db, "posts", posId), {
+  const commentRef = await addDoc(collection(db, "comments"), {
+    ...comment,
+    authorId: user.uid,
+  });
+
+  await updateDoc(doc(db, "posts", postId), {
     comments: arrayUnion(commentRef.id),
   });
 
@@ -51,8 +67,21 @@ export async function updateComment(
   commentId: string,
   text: string,
 ): Promise<void> {
-  await updateDoc(doc(db, "comments", commentId), {
-    text: text,
+  const user = requireAuth();
+
+  const commentRef = doc(db, "comments", commentId);
+  const commentSnap = await getDoc(commentRef);
+
+  if (!commentSnap.exists()) {
+    throw new Error("Comment not found.");
+  }
+
+  if (commentSnap.data().authorId !== user.uid) {
+    throw new Error("You can only edit your own comments.");
+  }
+
+  await updateDoc(commentRef, {
+    comment: text,
   });
 }
 
@@ -61,9 +90,22 @@ export async function deleteComment(
   commentId: string,
   postId: string,
 ): Promise<void> {
+  const user = requireAuth();
+
+  const commentRef = doc(db, "comments", commentId);
+  const commentSnap = await getDoc(commentRef);
+
+  if (!commentSnap.exists()) {
+    throw new Error("Comment not found.");
+  }
+
+  if (commentSnap.data().authorId !== user.uid) {
+    throw new Error("You can only delete your own comments.");
+  }
+
   await updateDoc(doc(db, "posts", postId), {
     comments: arrayRemove(commentId),
   });
 
-  await deleteDoc(doc(db, "comments", commentId));
+  await deleteDoc(commentRef);
 }

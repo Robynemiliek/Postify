@@ -1,6 +1,6 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@/context/AuthContext";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -22,7 +22,8 @@ import { PostData } from "@/utils/postData";
 
 export default function Page() {
   const [posts, setPosts] = useState<PostData[]>([]);
-  const [currentUser, setCurrentUser] = useState("");
+  const { user } = useAuth();
+  const currentUser = user?.uid ?? "";
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<PostData | null>(null);
 
@@ -31,28 +32,13 @@ export default function Page() {
   const [editedDescription, setEditedDescription] = useState("");
   const [editedCategory, setEditedCategory] = useState("");
 
-  // MIDLERTIDIG INNLOGGING
-  const saveCurrentUser = async () => {
-    await AsyncStorage.setItem("currentUser", "Robyn");
-  };
-
-  const loadCurrentUser = async () => {
-    const user = await AsyncStorage.getItem("currentUser");
-    setCurrentUser(user || "");
-  };
-
-  useEffect(() => {
-    saveCurrentUser();
-    loadCurrentUser();
-  }, []);
-
   const loadPosts = async () => {
     const fetchedPosts = await getAllPosts();
     setPosts(fetchedPosts);
   };
 
   const deletePost = async () => {
-    if (!selectedPost) return;
+    if (!selectedPost || selectedPost.authorId !== currentUser) return;
 
     await deletePostFromFirebase(selectedPost.id);
 
@@ -71,6 +57,8 @@ export default function Page() {
   );
 
   const startEditPost = (post: PostData) => {
+    if (post.authorId !== currentUser) return;
+
     setSelectedPost(post);
     setEditedTitle(post.title);
     setEditedDescription(post.description);
@@ -88,7 +76,7 @@ export default function Page() {
   );
 
   const updatePost = async () => {
-    if (!selectedPost) return;
+    if (!selectedPost || selectedPost.authorId !== currentUser) return;
 
     await updatePostFromFirebase(selectedPost.id, {
       title: editedTitle,
@@ -123,6 +111,8 @@ export default function Page() {
           <Post
             post={item}
             onDelete={(post) => {
+              if (post.authorId !== currentUser) return;
+
               setSelectedPost(post);
               setModalVisible(true);
             }}
