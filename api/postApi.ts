@@ -54,6 +54,8 @@ export async function createPost(data: NewPost): Promise<void> {
 export async function getAllPosts(
   sortOrder: "asc" | "desc" = "desc",
 ): Promise<PostData[]> {
+  requireAuth();
+
   const q = query(
     collection(db, POSTS_COLLECTION),
     orderBy("createdAt", sortOrder),
@@ -75,6 +77,8 @@ export async function getAllMyPosts(
   authorId: string,
   sortOrder: "asc" | "desc" = "desc",
 ): Promise<PostData[]> {
+  requireAuth();
+
   if (!authorId?.trim()) {
     throw new Error("Author ID is required.");
   }
@@ -103,6 +107,8 @@ export async function getAllMyPosts(
 
 // READ ONE
 export async function getPostById(id: string): Promise<PostData | null> {
+  requireAuth();
+
   const snap = await getDoc(doc(db, POSTS_COLLECTION, id));
 
   if (!snap.exists()) return null;
@@ -172,6 +178,8 @@ export async function toggleBookmark(
 export async function getBookmarkedPosts(
   authorName: string,
 ): Promise<PostData[]> {
+  requireAuth();
+
   const q = query(
     collection(db, POSTS_COLLECTION),
     where("bookmarks", "array-contains", authorName),
