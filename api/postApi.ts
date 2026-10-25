@@ -58,17 +58,17 @@ export async function getAllPosts(
 
 // READ MY POSTS
 export async function getAllMyPosts(
-  authorName: string,
+  authorId: string,
   sortOrder: "asc" | "desc" = "desc",
 ): Promise<PostData[]> {
-  if (!authorName?.trim()) {
-    throw new Error("Author name is required.");
+  if (!authorId?.trim()) {
+    throw new Error("Author ID is required.");
   }
 
   try {
     const q = query(
       collection(db, POSTS_COLLECTION),
-      where("author", "==", authorName.trim()),
+      where("authorId", "==", authorId),
       orderBy("createdAt", sortOrder),
     );
 
@@ -82,8 +82,8 @@ export async function getAllMyPosts(
         }) as PostData,
     );
   } catch (error) {
-    console.error("Failed to fetch the author's posts:", error);
-    throw new Error("Could not load the author's posts.");
+    console.error("Firebase error:", error);
+    throw error;
   }
 }
 

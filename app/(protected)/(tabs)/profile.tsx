@@ -1,21 +1,63 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
 import { signOutUser } from "@/api/authApi";
+import { getAllMyPosts } from "@/api/postApi";
+import Post from "@/components/Post";
 import { useAuth } from "@/context/AuthContext";
+import { PostData } from "@/utils/postData";
 
 export default function Profile() {
   const { user } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState("");
+
+  const [myPosts, setMyPosts] = useState<PostData[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const loadMyPosts = async () => {
+        if (!user) {
+          setMyPosts([]);
+          return;
+        }
+
+        setLoadingPosts(true);
+
+        try {
+          const posts = await getAllMyPosts(user.uid);
+
+          if (active) {
+            setMyPosts(posts);
+          }
+        } catch (error) {
+          console.error("Could not load my posts:", error);
+        } finally {
+          if (active) {
+            setLoadingPosts(false);
+          }
+        }
+      };
+
+      loadMyPosts();
+
+      return () => {
+        active = false;
+      };
+    }, [user?.uid]),
+  );
 
   const handleSignOut = async () => {
     setLoggingOut(true);
@@ -31,7 +73,10 @@ export default function Profile() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.container}
+    >
       <Image
         source={{
           uri: "https://images2.minutemediacdn.com/image/upload/c_crop,x_0,y_521,w_6960,h_3915/c_fill,w_720,ar_16:9,f_auto,q_auto,g_auto/images%2FvoltaxMediaLibrary%2Fmmsport%2Fmentalfloss%2F01g05dr5ywhn47egkrkd.jpg",
@@ -47,7 +92,7 @@ export default function Profile() {
       <View style={styles.imfo}>
         <Text style={styles.imfoText}>Oslo, Norway</Text>
         <Text style={styles.imfoText}>Høyskolen Kristiania</Text>
-        <Text style={styles.imfoText}>12 innlegg</Text>
+        <Text style={styles.imfoText}>{myPosts.length} innlegg</Text>
       </View>
 
       <Pressable
@@ -80,13 +125,24 @@ export default function Profile() {
       </Pressable>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
-    </View>
+
+      <View style={styles.myPostsSection}>
+        <Text style={styles.myPostsTitle}>My Posts</Text>
+
+        {loadingPosts ? (
+          <ActivityIndicator color="#6258d8" />
+        ) : myPosts.length === 0 ? (
+          <Text>You haven't created any posts yet.</Text>
+        ) : (
+          myPosts.map((post) => <Post key={post.id} post={post} />)
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: "center",
     padding: 24,
     backgroundColor: "#f5f5f5",
@@ -168,5 +224,21 @@ const styles = StyleSheet.create({
 
   buttonPressed: {
     opacity: 0.75,
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+
+  myPostsSection: {
+    width: "100%",
+    marginTop: 30,
+    marginBottom: 30,
+  },
+
+  myPostsTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 16,
   },
 });

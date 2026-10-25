@@ -1,12 +1,14 @@
 import { PostData } from "@/utils/postData";
 import { Link } from "expo-router";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+
+import { useAuth } from "@/context/AuthContext";
 
 type PostProps = {
   post: PostData;
@@ -21,6 +23,9 @@ export default function Post({
   onEdit,
   onRemoveFavorite,
 }: PostProps) {
+  const { user } = useAuth();
+  const isOwner = !!user && post.authorId === user.uid;
+
   const commentCount = post.comments?.length ?? 0;
   const likeCount = post.likes?.length ?? 0;
   const firstImage = post.imageUrls?.[0];
@@ -66,13 +71,13 @@ export default function Post({
         <Text style={styles.author}>{post.author}</Text>
       </View>
 
-      {onDelete && (
+      {isOwner && onDelete && (
         <Pressable style={styles.deleteButton} onPress={() => onDelete(post)}>
           <Text style={styles.buttonText}>Delete</Text>
         </Pressable>
       )}
 
-      {onEdit && (
+      {isOwner && onEdit && (
         <Pressable style={styles.editButton} onPress={() => onEdit(post)}>
           <Text style={styles.buttonText}>Edit</Text>
         </Pressable>
